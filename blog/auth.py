@@ -10,19 +10,24 @@ def check_auth(username, password):
         combination is valid.
     """
     cur = db.connection.cursor()
-    hashsed_password = hashlib.md5(password.encode()).hexdigest()
-    cur.execute(f"SELECT * FROM users WHERE email='{username}' AND password='{hashsed_password}'")
+    # hashsed_password = hashlib.md5(password.encode()).hexdigest()
+    cur.execute(f"SELECT * FROM users WHERE email=%s", [username])
     user = cur.fetchone()
 
     if user is None:
         return False
+    
+    stored_password = user.get("password").encode('utf-8')
 
-    session["is_logged_in"] = True
-    session["id"] = user.get("id")
-    session["email"] = user.get("email")
-    session["full_name"] = user.get("full_name")
-
-    return True
+    # Verify the password with the stored hash
+    if bycrypt.checkpw(password.encode('utf-8'), stored_password):    
+    	session["is_logged_in"] = True
+    	session["id"] = user.get("id")
+    	session["email"] = user.get("email")
+    	session["full_name"] = user.get("full_name")
+	return True
+    else:
+	return False
 
     # return username == config.username and password == config.password
 
